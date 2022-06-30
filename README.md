@@ -55,6 +55,8 @@ You can add a single entry into the database using:
 await LocalDatabase.add("PersonsTable", 
     {id: 1, firstName: "John", lastName: "Doe", age: 42}
 );
+// Remember, adding an entry that shares a keyColumn value with 
+// another entry already in the database will simply override that entry!
 ```
 
 You can add multiple entries into the database using:
