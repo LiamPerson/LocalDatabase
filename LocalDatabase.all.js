@@ -1,6 +1,109 @@
-import TableSchema from './TableSchema';
-import ColumnSchema from './ColumnSchema';
-import DatabaseSchema from './DatabaseSchema';
+/**
+ * The schema for a column using LocalDatabase.
+ */
+ class ColumnSchema {
+    /**
+     * @typedef ColumnSchemaOptions
+     * @property {Boolean} unique If true, the column will not allow duplicate values for a single key.
+     * @property {Boolean} multiEntry If true, the column will add an entry in the entry for each array element when the keyPath resolves to an array. If false, it will add one single entry containing the array.
+     * @property {String} locale A string containing a specific locale code, e.g. en-US, or pl
+     */
+
+    /**
+     * The options you want to initialise this column with.
+     * @type {ColumnSchemaOptions}
+     */
+    options = {
+        unique: false,
+        multiEntry: false,
+        locale: null
+    };
+    /**
+     * The name of the column.
+     * @type {String}
+     */
+    name = "";
+
+    /**
+     * Generates a column blueprint for use in the TableSchema.
+     * @param {String} name The name of the column.
+     * @param {ColumnSchemaOptions} [options] The options you want to initialise this column with.
+     */
+    constructor(name, options = this.options) {
+        this.name = name;
+        this.options = options;
+    }
+}
+
+/**
+ * The schema for a database using LocalDatabase.
+ */
+ class DatabaseSchema {
+    /**
+     * The name of your database.
+     * @type {String}
+     */
+    name = "";
+
+    /**
+     * The tables of your database.
+     */
+    tables = [];
+
+    /**
+     * Generates a database blueprint for use in LocalDatabase.
+     * @param {String} name 
+     * @param {Array.<TableSchema>} [tables] An array of the tables you want to have in this database.
+     */
+    constructor(name, tables = []) {
+        this.name = name;
+        this.tables = tables;
+    }
+}
+
+/**
+ * The schema for a table using LocalDatabase.
+ */
+ class TableSchema {
+    /**
+     * The name of the table.
+     * @type {String}
+     */
+    name = ""
+    /**
+     * The primary column. This must not have any duplicates!
+     * @type {ColumnSchema}
+     */
+    keyColumn = null;
+    /**
+     * The columns that are not the keyColumn that reside in this table.
+     * @type {Array.<ColumnSchema>}
+     */
+    otherColumns = [];
+    /**
+     * If true, the table has a key generator.
+     * @type {Boolean}
+     */
+    autoIncrement = false;
+
+    /**
+     * Generates a table blueprint for use in DatabaseSchema.
+     * @param {String} name
+     * @param {ColumnSchema} keyColumn The primary column for this table. This column must not have any duplicates!
+     * @param {Array.<ColumnSchema>} [otherColumns] An array of all of the other columns you want to have in this table.
+     * @param {Boolean} [autoIncrement] If true, the table has a key generator.
+     */
+    constructor(name, keyColumn, otherColumns = [], autoIncrement = false) {
+        if(!name) throw Error("Error in TableSchema. Attempting to generate a table without providing a table name.");
+        if(!keyColumn) throw Error("Error in TableSchema. Attempting to generate a table without providing a primary column.");
+        if(otherColumns.includes(keyColumn) || new Set(otherColumns).size !== otherColumns.length) console.warn("Warning in TableSchema. You are trying to generate a table using duplicate columns. Make sure you have not included your chosen keyColumn in the \"otherColumns\" parameter.");
+        this.name = name
+        this.keyColumn = keyColumn;
+        this.otherColumns = otherColumns;
+        this.autoIncrement = autoIncrement;
+    }
+    
+}
 
 /**
  * A local database to handle local data storage such as the information about `items`.
@@ -366,5 +469,3 @@ import DatabaseSchema from './DatabaseSchema';
     static Database = DatabaseSchema;
 
 }
-
-export default LocalDatabase
