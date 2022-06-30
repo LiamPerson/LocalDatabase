@@ -1,8 +1,19 @@
 # LocalDatabase
 <h3>A simple front-end embedded database that wraps <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a>.</h3>
 
-# Installation
+* [Installation](#installation)
+* [Preliminary](#preliminary)
+* [Creating a Database](#creating-a-database)
+* [Inserting & Updating](#inserting--updating)
+* [Select Queries](#select-queries)
+* [NodeJS](#nodejs)
+* [Example Usage](#example-usage)
+
+Installation
+------------
+
 Either:
+
 - **Modules:** Include the `LocalDatabase.js`, `ColumnSchema.js`, `TableSchema.js`, `DatabaseSchema.js` files in your project and import the LocalDatabase file: 
 ```js
 import LocalDatabase from './LocalDatabase';
@@ -12,7 +23,8 @@ import LocalDatabase from './LocalDatabase';
 <script src="LocalDatabase.all.js"></script>
 ```
 
-# Preliminary
+Preliminary
+-----------
 
 - A database is comprised of tables.
 - Tables are comprised of columns.
@@ -21,7 +33,8 @@ import LocalDatabase from './LocalDatabase';
 - Columns are updated by keyColumns.
 - keyColumns are the primary identifier for rows.
 
-# Creating a Database
+Creating a Database
+-------------------
 
 A **database** is comprised of **tables**.
 **Tables** are comprised of **columns**.
@@ -45,7 +58,8 @@ await LocalDatabase.init(dbSchema);
 
 ```
 
-# Inserting & Updating
+Inserting & Updating
+--------------------
 
 Inserting and updating are a single combined action and referred to as `add`. `add`ing an entry with the keyColumn cell's value already in the table will result in an update to the entry already in the table.
 
@@ -148,7 +162,9 @@ If you were to `select` query *Bob Smith* the result would look something like t
 { id: 2, firstName: "Bob", lastName: "Smith", age: 35, notes: "Really likes spreadsheets." }
 ```
 
-# Select Queries
+Select Queries
+--------------
+
 To select someone from the *People* table that has the firstName John, age 69, and their last name is not Gilmore:
 
 <h3>PersonsTable</h3>
@@ -220,7 +236,8 @@ The above line of code selects the following row:
 
 
 
-# NodeJS
+NodeJS
+------
 
 This embedded database is made for use on the front-end of a website although you can modify `export default` to `module.exports` in all classes:
 ```js
@@ -232,7 +249,9 @@ module.exports = LocalDatabase;
 ``` 
 to use this in NodeJS.
 
-# Example usage:
+Example Usage
+-------------
+
 ```html
 <script src="LocalDatabase.all.js"></script>
 <script>
