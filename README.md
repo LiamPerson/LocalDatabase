@@ -1,6 +1,16 @@
 # LocalDatabase
 <h3>A simple front-end embedded database that wraps <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a>.</h3>
 
+# Installation
+Either:
+- **Modules:** Include the `LocalDatabase.js`, `ColumnSchema.js`, `TableSchema.js`, `DatabaseSchema.js` files in your project and import the LocalDatabase file: 
+```js
+import LocalDatabase from './LocalDatabase';
+```
+-  **HTML Script:** Include the LocalDatabase.all.js file and import like so:
+```html
+<script src="LocalDatabase.all.js"></script>
+```
 
 # Inserting & Updating
 
