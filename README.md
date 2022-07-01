@@ -1,5 +1,5 @@
 # LocalDatabase
-<h3>A simple embedded database designed for front-end that wraps <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a>.</h3>
+<h3>A simple queryable embedded database designed for front-end that wraps <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a>.</h3>
 
 * [Installation](#installation)
 * [Preliminary](#preliminary)
