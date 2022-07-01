@@ -8,7 +8,9 @@ class TableSchema {
      */
     name = ""
     /**
-     * The primary column. This must not have any duplicates!
+     * The primary column of the table. 
+     * In other software this may be referred to as a keypath or a primary key.
+     * This must not have any duplicates!
      * @type {ColumnSchema}
      */
     keyColumn = null;
@@ -32,7 +34,7 @@ class TableSchema {
      */
     constructor(name, keyColumn, otherColumns = [], autoIncrement = false) {
         if(!name) throw Error("Error in TableSchema. Attempting to generate a table without providing a table name.");
-        if(!keyColumn) throw Error("Error in TableSchema. Attempting to generate a table without providing a primary column.");
+        if(!keyColumn) throw Error("Error in TableSchema. Attempting to generate a table without providing a key column.");
         if(otherColumns.includes(keyColumn) || new Set(otherColumns).size !== otherColumns.length) console.warn("Warning in TableSchema. You are trying to generate a table using duplicate columns. Make sure you have not included your chosen keyColumn in the \"otherColumns\" parameter.");
         this.name = name
         this.keyColumn = keyColumn;
