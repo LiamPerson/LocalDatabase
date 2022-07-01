@@ -22,10 +22,10 @@ import DatabaseSchema from './DatabaseSchema';
     static version = 1;
 
     /**
-     * The name of the tables used by this database.
-     * @type {String}
+     * The schema used to initialise this database.
+     * @type {DatabaseSchema}
      */
-    static tableNames = [];
+    static schema = null;
 
     /**
      * Initialise the LocalDatabase system.
@@ -37,9 +37,11 @@ import DatabaseSchema from './DatabaseSchema';
             throw Error("Your browser doesn't support a stable version of IndexedDB. As such, this app cannot run properly.");
         }
 
+        LocalDatabase.schema = schema;
+
         // Attempt to access the IndexedDB API
         window.indexedDB.deleteDatabase(schema.name);
-        const opening = window.indexedDB.open(schema.name, 1);
+        const opening = window.indexedDB.open(schema.name, LocalDatabase.version);
 
         return new Promise((success, reject) => {
             opening.onerror = event => {
@@ -85,10 +87,8 @@ import DatabaseSchema from './DatabaseSchema';
          * @important Make sure you update the `LocalDatabase.version` 
          */
 
-        // Set the tables (object stores)
         for(const table of schema.tables) {
-            // Add tables to the definition
-            this.tableNames.push(table.name);
+            // Set the tables (object stores)
             const tableStore = LocalDatabase.instance.createObjectStore(table.name, { keyPath: table.keyColumn.name, autoIncrement: table.autoIncrement });
             // Set the columns (indexes)
             for(const column of table.otherColumns) {
@@ -125,7 +125,7 @@ import DatabaseSchema from './DatabaseSchema';
     static add(table, object, options = { upsert: true }) {
         if(!LocalDatabase.instance) throw Error("Error in LocalDatabase.add: The database has not yet been initialised! Please make sure you run `await LocalDatabase.init()` before using this.");
         if(!table) throw Error("Error in LocalDatabase.add: No store defined.");
-        if(!LocalDatabase.tableNames.includes(table)) throw Error(`Error in LocalDatabase.select: The specified table (${table}) was not found in the schema used to initialise the database.`);
+        if(!LocalDatabase.schema.tableNames.includes(table)) throw Error(`Error in LocalDatabase.select: The specified table (${table}) was not found in the schema used to initialise the database.`);
         return new Promise((success, reject) => {
             const txn = LocalDatabase.instance.transaction(table, "readwrite");
             const store = txn.objectStore(table);
@@ -159,7 +159,7 @@ import DatabaseSchema from './DatabaseSchema';
      * 
      * @note All column queries are 1 layer deep. Querying columns that contain objects is not currently possible.
      * 
-     * @note Selectors are $lt (Less Than), $gt (Greater Than), and $ne (Not Equal To)
+     * @note Range selectors are $lt (Less Than), $lte (Less Than or Equal To), $gt (Greater Than), $gte (Greater Than or Equal To), and $ne (Not Equal To)
      * 
      * @param {String} table 
      * @param {*} query 
@@ -167,37 +167,49 @@ import DatabaseSchema from './DatabaseSchema';
     static select(table, query) {
         if(!LocalDatabase.instance) throw Error("Error in LocalDatabase.select: The database has not yet been initialised! Please make sure you run `await LocalDatabase.init()` before using this.");
         if(!table) throw Error("Error in LocalDatabase.select: No table defined.");
-        if(!LocalDatabase.tableNames.includes(table)) throw Error(`Error in LocalDatabase.select: The specified table (${table}) was not found in the schema used to initialise the database.`);
+        if(!LocalDatabase.schema.tableNames.includes(table)) throw Error(`Error in LocalDatabase.select: The specified table (${table}) was not found in the schema used to initialise the database.`);
         return new Promise((success, reject) => {
-            // Destructure query into $lt, $gt, $ne
+            // Destructure query into $lt, $lte, $gte, $gt, $ne
             // The below arrays will be populated with a series of arrays like: [columnName, columnEntry]
-            const boundQueries = [];
-            const ltQueries = [];
-            const gtQueries = [];
-            const neQueries = [];
-            const basicQueries = [];
+            const additiveQueries = [];
+            const subtractiveQueries = [];
             for(const [columnName, columnEntry] of Object.entries(query)) {
                 // Basic query for exact matches
                 if(LocalDatabase._isPrimitive(columnEntry) || columnEntry === null) {
-                    basicQueries.push([columnName, columnEntry]);
+                    additiveQueries.push([columnName, columnEntry]);
                     continue;
                 }
 
+
+                // Get the highest greater than value
+                let greaterThan = columnEntry.$gt !== undefined ? columnEntry.$gt : columnEntry.$gte;
+                if(columnEntry.$gt !== undefined && columnEntry.$gte !== undefined) {
+                    greaterThan = Math.max(columnEntry.$gt, columnEntry.$gte);
+                }
+                const isGte = greaterThan === columnEntry.$gte;
+                // Get the lowest less than value
+                let lessThan = columnEntry.$lt !== undefined ? columnEntry.$lt : columnEntry.$lte;
+                if(columnEntry.$lt !== undefined && columnEntry.$lte !== undefined) {
+                    lessThan = Math.min(columnEntry.$lt, columnEntry.$lte);
+                }
+                const isLte = lessThan === columnEntry.$lte;
+
+
                 // Within a range
-                if(columnEntry.$lt !== undefined && columnEntry.$gt !== undefined)
-                    boundQueries.push([columnName, IDBKeyRange.bound(columnEntry.$gt, columnEntry.$lt)]);
+                if(lessThan !== undefined && greaterThan !== undefined)
+                    additiveQueries.push([columnName, IDBKeyRange.bound(greaterThan, lessThan, !isGte, !isLte)]);
 
                 // Less than, no greater than
-                if(columnEntry.$lt !== undefined && !(columnEntry.$gt !== undefined))
-                    ltQueries.push([columnName, IDBKeyRange.upperBound(columnEntry.$lt)]);
+                if(lessThan !== undefined && greaterThan === undefined)
+                    additiveQueries.push([columnName, IDBKeyRange.upperBound(columnEntry.$lt, !isLte)]);
 
-                // Greater than
-                if(!(columnEntry.$lt !== undefined) && columnEntry.$gt !== undefined)
-                    gtQueries.push([columnName, IDBKeyRange.lowerBound(columnEntry.$gt)]);
+                // Greater than, no less than
+                if(lessThan === undefined && greaterThan !== undefined)
+                    additiveQueries.push([columnName, IDBKeyRange.lowerBound(columnEntry.$gt, !isGte)]);
 
                 // Not equal to
                 if(columnEntry.$ne !== undefined)
-                    neQueries.push([columnName, columnEntry.$ne]);
+                    subtractiveQueries.push([columnName, columnEntry.$ne]);
                     
             }
 
@@ -225,14 +237,14 @@ import DatabaseSchema from './DatabaseSchema';
             }
 
             // Perform additive queries
-            const additivePromises = getPromisesFromQueryArray([...boundQueries, ...basicQueries, ...ltQueries, ...gtQueries]);
+            const additivePromises = getPromisesFromQueryArray(additiveQueries);
             // Perform subtractive queries
-            const subtractivePromises = getPromisesFromQueryArray(neQueries);
+            const subtractivePromises = getPromisesFromQueryArray(subtractiveQueries);
 
             // Await all additive promises' completion
             Promise.all(additivePromises).then(additiveResult => {
                 // If there is just 1 result, and there is no $ne queries return that.
-                if(neQueries.length === 0 && additiveResult.length <= 1) {
+                if(subtractiveQueries.length === 0 && additiveResult.length <= 1) {
                     success(additiveResult[0]);
                     return;
                 }
@@ -274,6 +286,26 @@ import DatabaseSchema from './DatabaseSchema';
                 });
                 
             })
+        })
+    }
+
+    static delete(table, query) {
+        if(!LocalDatabase.instance) throw Error("Error in LocalDatabase.delete: The database has not yet been initialised! Please make sure you run `await LocalDatabase.init()` before using this.");
+        if(!table) throw Error("Error in LocalDatabase.delete: No table defined.");
+        if(!LocalDatabase.schema.tableNames.includes(table)) throw Error(`Error in LocalDatabase.delete: The specified table (${table}) was not found in the schema used to initialise the database.`);
+
+        return new Promise(success => {
+            // Select all entries to be deleted
+            LocalDatabase.select(table, query).then(results => {
+                // Find out what the key column is for this table
+                const tableSchema = LocalDatabase.schema.tableMap[table];
+                const keyColumn = tableSchema.keyColumn.name;
+        
+                // Get an array of keys from the results.
+                const keyArray = results.map(entry => entry[keyColumn]);
+                // Initiate delete 
+
+            });
         })
     }
 
