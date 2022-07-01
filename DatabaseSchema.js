@@ -10,8 +10,21 @@ class DatabaseSchema {
 
     /**
      * The tables of your database.
+     * @type {Array.<TableSchema>}
      */
     tables = [];
+
+    /**
+     * The names of all the tables in this database paired with the table schemas.
+     * @type {Object.<TableSchema>}
+     */
+    tableMap = {};
+
+    /**
+     * The names of all the tables in this database.
+     * @type {Array.<String>}
+     */
+    tableNames = [];
 
     /**
      * Generates a database blueprint for use in LocalDatabase.
@@ -21,6 +34,10 @@ class DatabaseSchema {
     constructor(name, tables = []) {
         this.name = name;
         this.tables = tables;
+        tables.map(table => { 
+            this.tableMap[table.name] = table; 
+            this.tableNames.push(table.name);
+        });
     }
 }
 
