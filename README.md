@@ -6,6 +6,7 @@
 * [Creating a Database](#creating-a-database)
 * [Inserting & Updating](#inserting--updating)
 * [Select Queries](#select-queries)
+* [Deleting](#deleting)
 * [NodeJS](#nodejs)
 * [Example Usage](#example-usage)
 
@@ -165,7 +166,9 @@ If you were to `select` query *Bob Smith* the result would look something like t
 Select Queries
 --------------
 
-To select someone from the *People* table that has the firstName John, age 69, and their last name is not Gilmore:
+You perform selects by passing an object matching what you're looking for.
+
+*For example:* to select someone from the *People* table that has the firstName John, age 69, and their last name is not Gilmore:
 
 <h3>PersonsTable</h3>
 
@@ -234,6 +237,58 @@ The above line of code selects the following row:
     </tbody>
 </table>
 
+
+Notice the `$ne` at the end of the query? Instead of searching for exact values you can search within a range or not equal to something. You can use multiple of these in the same query in the same value as well:
+
+```js
+// Select all the people aged 20 to 60
+await LocalDatabase.select("PersonsTable", {age: {$lt: 60, $gte: 20}});
+```
+
+Below are all the query selectors you can use in `select`:
+
+<h3>Query Selectors</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Selector</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>$ne</td>
+            <td>Not equal to (≠)</td>
+        </tr>
+        <tr>
+            <td>$lt</td>
+            <td>Less than (<)</td>
+        </tr>
+        <tr>
+            <td>$gt</td>
+            <td>Greater than (>)</td>
+        </tr>
+        <tr>
+            <td>$lte</td>
+            <td>Less than or equal to (≤)</td>
+        </tr>
+        <tr>
+            <td>$gte</td>
+            <td>Greater than or equal to (≥)</td>
+        </tr>
+    </tbody>
+</table>
+
+
+Deleting
+--------
+
+To delete entries, simply pass the table and a query just like you would in a `select` to the `delete` method.
+
+```js
+// Delete persons under the age of 18
+await LocalDatabase.delete("PersonsTable", {age: {$lt: 18}});
+```
 
 
 NodeJS
