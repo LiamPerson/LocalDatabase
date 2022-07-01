@@ -27,12 +27,22 @@ import LocalDatabase from './LocalDatabase';
 Preliminary
 -----------
 
+Let's cover some basics before we get into the details:
+
 - A database is comprised of tables.
 - Tables are comprised of columns.
 - Rows are a collected population of columns.
 - Columns are searchable to collect rows.
 - Columns are updated by keyColumns.
 - keyColumns are the primary identifier for rows.
+- Rows can be selected and deleted by searching data in columns.
+
+Notes
+-----
+
+A limitation of IndexedDB is that you can only perform 1 write operation at a time. Currently, IndexedDB also limits you to only having 1 instance open **per browser**! 
+
+This means that if you implement this you won't be able to run this database in multiple tabs due to limitations of IndexedDB.
 
 Creating a Database
 -------------------
