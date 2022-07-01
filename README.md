@@ -7,7 +7,6 @@
 * [Inserting & Updating](#inserting--updating)
 * [Select Queries](#select-queries)
 * [Deleting](#deleting)
-* [NodeJS](#nodejs)
 * [Example Usage](#example-usage)
 
 Installation
@@ -299,20 +298,6 @@ To delete entries, simply pass the table and a query just like you would in a `s
 // Delete persons under the age of 18
 await LocalDatabase.delete("PersonsTable", {age: {$lt: 18}});
 ```
-
-
-NodeJS
-------
-
-This embedded database is made for use on the front-end of a website although you can modify `export default` to `module.exports` in all classes:
-```js
-export default LocalDatabase;
-```
-to 
-```js
-module.exports = LocalDatabase;
-``` 
-to use this in NodeJS.
 
 Example Usage
 -------------
