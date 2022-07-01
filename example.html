@@ -22,12 +22,23 @@
             {id: 4, firstName: "David", lastName: "Gray", age: 20},
             {id: 6, firstName: "John", lastName: "Gilmore", age: 69},
             {id: 5, firstName: "John", lastName: "Robson", age: 69},
-            {id: 3, firstName: "Harry", lastName: "Gardener", age: 66}
+            {id: 3, firstName: "Harry", lastName: "Gardener", age: 66},
+            {id: 7, firstName: "Billy", lastName: "Jean", age: 19},
+            {id: 8, firstName: "Sarah", lastName: "Jones", age: 19},
+            {id: 9, firstName: "Karen", lastName: "Maker", age: 19},
+            {id: 10, firstName: "Al", lastName: "Young", age: 5},
         ]);
+
+        // Delete some data
+        await LocalDatabase.delete("People", {age: {$lt: 18}});
 
         // Query the database
         const allEntries = await LocalDatabase.select("People", {age: {$gt: 0}});
         console.log("All Entries", allEntries);
+
+        const people20to60 = await LocalDatabase.select("People", {age: {$lt: 60, $gte: 20}});
+        console.log("People ages 20 to 60", people20to60);
+
         const queryResult = await LocalDatabase.select("People", {firstName: "John", age: 69, lastName: {$ne: "Gilmore"}});
         console.log("Query result:", queryResult);
     })()
