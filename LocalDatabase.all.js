@@ -428,7 +428,22 @@
                 // Get an array of keys from the results.
                 const keyArray = results.map(entry => entry[keyColumn]);
                 // Initiate delete 
+                const deletePromises = [];
+                for(const key of keyArray) {
+                    deletePromises.push(new Promise((delSuccess, delReject) => {
+                        const txn = LocalDatabase.instance.transaction([tableSchema.name], "readwrite");
+                        txn.objectStore(tableSchema.name).delete(key);
 
+                        txn.oncomplete = event => { 
+                            delSuccess(event);
+                        }
+                        txn.onerror = event => {
+                            console.error(`Error in LocalDatabase.delete for store (${table}). Query, Event:`, query, event);
+                            reject(new Error(`Error in LocalDatabase.delete for store (${table}). Check console.`));
+                        }
+                    }))
+                }
+                Promise.all(deletePromises).then(resolution => success(resolution));
             });
         })
     }
